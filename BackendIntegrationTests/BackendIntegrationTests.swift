@@ -69,7 +69,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
     func testCanMakePurchase() async throws {
         try await self.purchaseMonthlyOffering()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
         let entitlements = self.purchasesDelegate.customerInfo?.entitlements
         expect(entitlements?["premium"]?.isActive) == true
     }
@@ -99,7 +99,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
 
         // purchase as anonymous user, then log in
         try await self.purchaseMonthlyOffering()
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
 
         let (customerInfo, created) = try await Purchases.shared.logIn(existingUserID)
         self.assertNoPurchases(customerInfo)
@@ -107,7 +107,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
 
         _ = try await Purchases.shared.restorePurchases()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
     }
 
     func testPurchaseAsIdentifiedThenLogOutThenRestoreGrantsEntitlements() async throws {
@@ -117,14 +117,14 @@ class BackendIntegrationSK1Tests: XCTestCase {
         _ = try await Purchases.shared.logIn(existingUserID)
         try await self.purchaseMonthlyOffering()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
 
         let customerInfo = try await Purchases.shared.logOut()
         self.assertNoPurchases(customerInfo)
 
         _ = try await Purchases.shared.restorePurchases()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
     }
 
     func testPurchaseWithAskToBuyPostsReceipt() async throws {
@@ -151,7 +151,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
         // This shouldn't throw error anymore
         try await self.purchaseMonthlyOffering()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
     }
 
     func testLogInReturnsCreatedTrueWhenNewAndFalseWhenExisting() async throws {
@@ -174,7 +174,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
         _ = try await Purchases.shared.logIn(userID1)
         try await self.purchaseMonthlyOffering()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
 
         testSession.clearTransactions()
 
@@ -194,7 +194,7 @@ class BackendIntegrationSK1Tests: XCTestCase {
 
         try await self.purchaseMonthlyOffering()
 
-        self.verifyEntitlementWentThrough()
+        try self.verifyEntitlementWentThrough()
 
         let loggedOutCustomerInfo = try await Purchases.shared.logOut()
         self.assertNoPurchases(loggedOutCustomerInfo)
@@ -226,7 +226,45 @@ class BackendIntegrationSK1Tests: XCTestCase {
         eligibility = await Purchases.shared.checkTrialOrIntroDiscountEligibility([productID])
         expect(eligibility[productID]?.status) == .ineligible
     }
-    
+
+    func testUserHasNoEligibleOffersByDefault() async throws {
+        let (_, created) = try await Purchases.shared.logIn(UUID().uuidString)
+        expect(created) == true
+
+        let offerings = try await Purchases.shared.offerings()
+        let product = try XCTUnwrap(offerings.current?.monthly?.storeProduct)
+
+        expect(product.discounts).to(haveCount(1))
+        expect(product.discounts.first?.offerIdentifier) == "com.revenuecat.monthly_4.99.1_free_week"
+
+        let offers = await product.getEligiblePromotionalOffers()
+        expect(offers).to(beEmpty())
+    }
+
+    func testPurchaseWithDiscount() async throws {
+        let (_, created) = try await Purchases.shared.logIn(UUID().uuidString)
+        expect(created) == true
+
+        let offerings = try await Purchases.shared.offerings()
+        let product = try XCTUnwrap(offerings.current?.monthly?.storeProduct)
+
+        try await self.purchaseMonthlyOffering()
+        let entitlement1 = try self.verifyEntitlementWentThrough()
+
+        print(entitlement1)
+
+        let offers = await product.getEligiblePromotionalOffers()
+        expect(offers).to(haveCount(1))
+        let offer = try XCTUnwrap(offers.first)
+
+        _ = try await Purchases.shared.purchase(product: product, promotionalOffer: offer)
+
+        let entitlement2 = try self.verifyEntitlementWentThrough()
+//        expect(entitlement.periodType) == .trial
+
+        print(entitlement2)
+    }
+
 }
 
 private extension BackendIntegrationSK1Tests {
@@ -250,8 +288,12 @@ private extension BackendIntegrationSK1Tests {
         Purchases.shared.delegate = purchasesDelegate
     }
 
-    func verifyEntitlementWentThrough() {
-        expect(self.purchasesDelegate.customerInfo?.entitlements.active.count) == 1
+    @discardableResult
+    func verifyEntitlementWentThrough() throws -> EntitlementInfo {
+        let activeEntitlements = self.purchasesDelegate.customerInfo?.entitlements.active
+        expect(activeEntitlements?.count) == 1
+
+        return try XCTUnwrap(activeEntitlements?.values.first)
     }
 
     func assertNoPurchases(_ customerInfo: CustomerInfo?) {

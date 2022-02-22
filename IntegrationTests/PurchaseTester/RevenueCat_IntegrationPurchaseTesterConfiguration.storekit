@@ -33,7 +33,14 @@
       "subscriptions" : [
         {
           "adHocOffers" : [
-
+            {
+              "displayPrice" : "1.99",
+              "internalID" : "EC7974C4",
+              "offerID" : "com.revenuecat.monthly_4.99.1_free_week",
+              "paymentMode" : "payUpFront",
+              "referenceName" : "com.revenuecat.monthly_4.99.1_week_intro",
+              "subscriptionPeriod" : "P2M"
+            }
           ],
           "displayPrice" : "4.99",
           "familyShareable" : true,
@@ -91,6 +98,10 @@
       ]
     }
   ],
+  "subscriptionOffersKeyPair" : {
+    "id" : "C815358F",
+    "privateKey" : "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgMpw0LScUC+8o+WsEAM20KOMzZOMSWKFjUixtwDidPMugCgYIKoZIzj0DAQehRANCAAQIMw4YEVZrDPrk/1dx5WV3hpkuy8enQs+yDAuJRtsrOnzRH6EFgTyiydprKlgUOHW6xBocrRNTMZXioCBQtchg"
+  },
   "version" : {
     "major" : 1,
     "minor" : 1
