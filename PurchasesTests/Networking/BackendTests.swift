@@ -40,6 +40,7 @@ class BackendTests: XCTestCase {
         override func perform(_ request: HTTPRequest,
                               authHeaders: [String: String],
                               completionHandler: Completion?) {
+            assert(Thread.isMainThread, "This class isn't thread safe")
             assert(mocks[request.path] != nil, "Path '\(request.path.relativePath)' not mocked")
             let response = mocks[request.path]!
 

@@ -89,8 +89,14 @@ class NetworkOperation: Operation {
         self.isExecuting = true
 
         self.log("Started")
-        self.begin {
-            self.finish()
+
+        // - From the notes:
+        // "operation queues ignore the value in this property and always start operations on a separate thread."
+        // Most operations aren't thread safe, so this ensures operations start on the main thread.
+        DispatchQueue.main.async {
+            self.begin {
+                self.finish()
+            }
         }
     }
 
