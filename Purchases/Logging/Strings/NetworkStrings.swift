@@ -19,7 +19,7 @@ enum NetworkStrings {
 
     case api_request_completed(httpMethod: String, path: String, httpCode: HTTPStatusCode)
     case api_request_started(httpMethod: String?, path: String?)
-    case creating_json_error(requestBody: [String: Any], error: String)
+    case creating_json_error(requestBody: Any, error: String)
     case creating_json_error_invalid(requestBody: [String: Any])
     case json_data_received(dataString: String)
     case parsing_json_error(error: Error)

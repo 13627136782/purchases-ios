@@ -44,14 +44,14 @@ class PostOfferForSigningOperation: NetworkOperation {
 
     private func post(completion: @escaping () -> Void) {
         let request = HTTPRequest(
-            method: .post(body: ["app_user_id": self.configuration.appUserID,
-                                 "fetch_token": self.postOfferData.receiptData.asFetchToken,
-                                 "generate_offers": [
-                                    ["offer_id": self.postOfferData.offerIdentifier,
-                                     "product_id": self.postOfferData.productIdentifier,
-                                     "subscription_group": self.postOfferData.subscriptionGroup
-                                    ]
-                                 ]]),
+            method: .postBody(["app_user_id": self.configuration.appUserID,
+                               "fetch_token": self.postOfferData.receiptData.asFetchToken,
+                               "generate_offers": [
+                                ["offer_id": self.postOfferData.offerIdentifier,
+                                 "product_id": self.postOfferData.productIdentifier,
+                                 "subscription_group": self.postOfferData.subscriptionGroup
+                                ]
+                               ]]),
             path: .postOfferForSigning
         )
 

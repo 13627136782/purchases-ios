@@ -131,7 +131,7 @@ class BackendTests: XCTestCase {
         XCTestObservationCenter.shared.addTestObserver(CurrentTestCaseTracker.shared)
     }
 
-    func testPostsReceiptDataCorrectly() {
+    func testPostsReceiptDataCorrectly() throws {
         let path: HTTPRequest.Path = .postReceiptData
 
         let response = HTTPResponse(statusCode: .success, response: validSubscriberResponse, error: nil)
@@ -164,7 +164,7 @@ class BackendTests: XCTestCase {
 
         expect(self.httpClient.calls.count).toEventually(equal(1))
         if self.httpClient.calls.count > 0 {
-            self.httpClient.calls[0].expectToEqual(expectedCall)
+            try self.httpClient.calls[0].expectToEqual(expectedCall)
         }
 
         expect(completionCalled).toEventually(beTrue())
@@ -368,7 +368,7 @@ class BackendTests: XCTestCase {
         expect(self.httpClient.calls.count).toEventually(equal(2))
     }
 
-    func testPostsReceiptDataWithProductRequestDataCorrectly() {
+    func testPostsReceiptDataWithProductRequestDataCorrectly() throws {
         let response = HTTPResponse(statusCode: .success, response: validSubscriberResponse, error: nil)
         httpClient.mock(requestPath: .postReceiptData, response: response)
 
@@ -417,7 +417,7 @@ class BackendTests: XCTestCase {
         expect(self.httpClient.calls.count).toEventually(equal(1))
 
         if self.httpClient.calls.count > 0 {
-            self.httpClient.calls[0].expectToEqual(expectedCall)
+            try self.httpClient.calls[0].expectToEqual(expectedCall)
         }
 
         expect(completionCalled).toEventually(beTrue())
@@ -572,7 +572,7 @@ class BackendTests: XCTestCase {
         }
     }
 
-    func testGetSubscriberCallsBackendProperly() {
+    func testGetSubscriberCallsBackendProperly() throws {
         let path: HTTPRequest.Path = .getCustomerInfo(appUserID: userID)
 
         let response = HTTPResponse(statusCode: .success, response: validSubscriberResponse, error: nil)
@@ -588,7 +588,7 @@ class BackendTests: XCTestCase {
         if self.httpClient.calls.count > 0 {
             let call = self.httpClient.calls[0]
 
-            call.expectToEqual(expectedCall)
+            try call.expectToEqual(expectedCall)
         }
     }
 
@@ -666,7 +666,7 @@ class BackendTests: XCTestCase {
         expect(self.httpClient.calls.count).to(equal(0))
     }
 
-    func testPostsProductIdentifiers() {
+    func testPostsProductIdentifiers() throws {
         let response = HTTPResponse(statusCode: .success,
                                     response: ["producta": true, "productb": false, "productd": NSNull()],
                                     error: nil)
@@ -697,7 +697,7 @@ class BackendTests: XCTestCase {
         if httpClient.calls.count > 0 {
             let call = httpClient.calls[0]
 
-            call.expectToEqual(expectedCall)
+            try call.expectToEqual(expectedCall)
             expect(call.request.requestBody?["product_identifiers"] as? [String]) == products
         }
 
@@ -1187,7 +1187,7 @@ class BackendTests: XCTestCase {
     }
 
     @available(iOS 11.2, *)
-    func testPostsReceiptDataWithDiscountInfoCorrectly() {
+    func testPostsReceiptDataWithDiscountInfoCorrectly() throws {
         let path: HTTPRequest.Path = .postReceiptData
 
         let response = HTTPResponse(statusCode: .success, response: validSubscriberResponse, error: nil)
@@ -1256,13 +1256,13 @@ class BackendTests: XCTestCase {
 
         if self.httpClient.calls.count > 0 {
             let call = self.httpClient.calls[0]
-            call.expectToEqual(expectedCall)
+            try call.expectToEqual(expectedCall)
         }
 
         expect(completionCalled).toEventually(beTrue())
     }
 
-    func testOfferForSigningCorrectly() {
+    func testOfferForSigningCorrectly() throws {
         let validSigningResponse: [String: Any] = [
             "offers": [
                 [
@@ -1314,7 +1314,7 @@ class BackendTests: XCTestCase {
 
         if self.httpClient.calls.count > 0 {
             let call = self.httpClient.calls[0]
-            call.expectToEqual(expectedCall)
+            try call.expectToEqual(expectedCall)
         }
 
         expect(completionCalled).toEventually(beTrue())
@@ -1961,13 +1961,15 @@ private extension BackendTests {
 
 private extension BackendTests.RequestCall {
 
-    func expectToEqual(_ other: BackendTests.RequestCall, file: FileString = #file, line: UInt = #line) {
+    func expectToEqual(_ other: BackendTests.RequestCall, file: FileString = #file, line: UInt = #line) throws {
         switch other.request.method {
         case .get:
             expect(file: file, line: line, self.request.requestBody).to(beNil())
 
         case let .post(body):
             expect(file: file, line: line, self.request.requestBody?.keys) == body.keys
+        case let .encodable(body):
+            try expect(file: file, line: line, self.request.requestBody?.keys) == body.asDictionary().keys
         }
 
         expect(file: file, line: line, self.request.path) == other.request.path

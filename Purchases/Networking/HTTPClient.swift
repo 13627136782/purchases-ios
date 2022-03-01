@@ -80,7 +80,7 @@ private extension HTTPClient {
 
         var method: HTTPRequest.Method { self.httpRequest.method }
         var path: String { self.httpRequest.path.description }
-        var requestBody: HTTPRequest.Body? { self.httpRequest.requestBody }
+//        var requestBody: HTTPRequest.Body? { self.httpRequest.requestBody }
 
         func adding(defaultHeaders: HTTPClient.RequestHeaders) -> Self {
             var copy = self
@@ -100,12 +100,13 @@ private extension HTTPClient {
             """
             <\(type(of: self)): httpMethod=\(self.method.httpMethod)
             path=\(self.path)
-            requestBody=\(self.requestBody?.description ?? "(null)")
             headers=\(self.headers.description )
             retried=\(self.retried)
             >
             """
         }
+
+//        requestBody=\(self.requestBody?.description ?? "(null)")
     }
     // swiftlint:enable nesting
 
@@ -246,10 +247,13 @@ private extension HTTPClient {
         let urlRequest = self.convert(request: request.adding(defaultHeaders: self.defaultHeaders))
 
         guard let urlRequest = urlRequest else {
-            if case let .post(requestBody) = request.method {
-                Logger.error("Could not create request to \(request.path) with body \(requestBody)")
-            } else {
+            switch request.method {
+            case .get:
                 Logger.error("Could not create request to \(request.path) without body")
+            case let .postBody(body):
+                Logger.error("Could not create request to \(request.path) with body \(body)")
+            case let .postEncodable(encodable):
+                Logger.error("Could not create request to \(request.path) with body \(encodable)")
             }
 
             request.completionHandler?(.invalidRequest,
@@ -285,17 +289,30 @@ private extension HTTPClient {
 
         urlRequest.allHTTPHeaderFields = headersWithETag
 
-        if let requestBody = request.requestBody {
-            if JSONSerialization.isValidJSONObject(requestBody) {
+        switch request.method {
+        case .get:
+            break
+
+        case let .postBody(body):
+            if JSONSerialization.isValidJSONObject(body) {
                 do {
-                    urlRequest.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+                    urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
                 } catch {
-                    Logger.error(Strings.network.creating_json_error(requestBody: requestBody,
+                    Logger.error(Strings.network.creating_json_error(requestBody: body,
                                                                      error: error.localizedDescription))
                     return nil
                 }
             } else {
-                Logger.error(Strings.network.creating_json_error_invalid(requestBody: requestBody))
+                Logger.error(Strings.network.creating_json_error_invalid(requestBody: body))
+                return nil
+            }
+
+        case let .postEncodable(encodable):
+            do {
+                urlRequest.httpBody = try encodable.asData()
+            } catch {
+                Logger.error(Strings.network.creating_json_error(requestBody: encodable,
+                                                                 error: error.localizedDescription))
                 return nil
             }
         }

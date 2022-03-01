@@ -119,7 +119,7 @@ private extension ErrorUtils {
 extension Encodable {
 
     func asDictionary() throws -> [String: Any] {
-        let data = try JSONEncoder().encode(self)
+        let data = try defaultJSONEncoder.encode(self)
         let result = try JSONSerialization.jsonObject(with: data, options: [])
 
         guard let result = result as? [String: Any] else {
@@ -130,3 +130,10 @@ extension Encodable {
     }
 
 }
+
+let defaultJSONEncoder: JSONEncoder = {
+    let encoder = JSONEncoder()
+    encoder.keyEncodingStrategy = .convertToSnakeCase
+
+    return encoder
+}()

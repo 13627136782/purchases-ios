@@ -57,7 +57,7 @@ class PostSubscriberAttributesOperation: NetworkOperation {
 
         let attributesInBackendFormat = self.subscriberAttributesMarshaller
             .map(subscriberAttributes: self.subscriberAttributes)
-        let request = HTTPRequest(method: .post(body: ["attributes": attributesInBackendFormat]),
+        let request = HTTPRequest(method: .postBody(["attributes": attributesInBackendFormat]),
                                   path: .postSubscriberAttributes(appUserID: appUserID))
 
         httpClient.perform(request, authHeaders: self.authHeaders) { statusCode, response, error in

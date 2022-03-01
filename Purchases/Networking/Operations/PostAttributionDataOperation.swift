@@ -47,7 +47,7 @@ class PostAttributionDataOperation: NetworkOperation {
             return
         }
 
-        let request = HTTPRequest(method: .post(body: ["network": self.network.rawValue, "data": self.attributionData]),
+        let request = HTTPRequest(method: .postEncodable(Body(network: self.network, data: self.attributionData)),
                                   path: .postAttributionData(appUserID: appUserID))
 
         self.httpClient.perform(request, authHeaders: self.authHeaders) { statusCode, response, error in
@@ -64,6 +64,32 @@ class PostAttributionDataOperation: NetworkOperation {
                                                            error: error,
                                                            completion: responseHandler)
         }
+    }
+
+}
+
+private extension PostAttributionDataOperation {
+
+    struct Body: HTTPRequestBody {
+
+        let network: AttributionNetwork
+        let data: [String: Any] // TODO: look up?
+
+        // MARK: -
+
+        // swiftlint:disable:next nesting
+        private enum CodingKeys: String, CodingKey {
+            case network
+            case data
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+
+            try container.encode(self.network, forKey: .network)
+//            try container.encode(self.data as NSDictionary, forKey: .data)
+        }
+
     }
 
 }

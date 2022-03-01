@@ -19,6 +19,12 @@ struct HTTPRequest {
 
 }
 
+protocol HTTPRequestBody: Encodable {
+
+    func asData() throws -> Data
+
+}
+
 // MARK: - Method
 
 extension HTTPRequest {
@@ -28,7 +34,8 @@ extension HTTPRequest {
     enum Method {
 
         case get
-        case post(body: Body)
+        case postBody(Body)
+        case postEncodable(HTTPRequestBody)
 
     }
 
@@ -36,12 +43,19 @@ extension HTTPRequest {
 
 extension HTTPRequest {
 
-    var requestBody: Body? {
-        switch self.method {
-        case let .post(body): return body
-        case .get: return nil
-        }
-    }
+//    var requestBody: Body? {
+//        switch self.method {
+//        case let .post(body):
+//            return body
+//
+//        case let .post(encodable):
+//            // TODO: log errors
+//            return try? body.asDictionary()
+//
+//        case .get:
+//            return nil
+//        }
+//    }
 
 }
 
@@ -50,7 +64,7 @@ extension HTTPRequest.Method {
     var httpMethod: String {
         switch self {
         case .get: return "GET"
-        case .post: return "POST"
+        case .postBody, .postEncodable: return "POST"
         }
     }
 
@@ -109,6 +123,14 @@ extension HTTPRequest.Path: CustomStringConvertible {
         case let .postSubscriberAttributes(appUserID):
             return "/subscribers/\(appUserID)/attributes"
         }
+    }
+
+}
+
+extension HTTPRequestBody {
+
+    func asData() throws -> Data {
+        return try defaultJSONEncoder.encode(self)
     }
 
 }

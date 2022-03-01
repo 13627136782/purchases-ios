@@ -90,7 +90,7 @@ class PostReceiptDataOperation: CacheableNetworkOperation {
             body["presented_offering_identifier"] = offeringIdentifier
         }
 
-        let request = HTTPRequest(method: .post(body: body), path: .postReceiptData)
+        let request = HTTPRequest(method: .postBody(body), path: .postReceiptData)
 
         httpClient.perform(request, authHeaders: self.authHeaders) { statusCode, response, error in
             self.customerInfoCallbackCache.performOnAllItemsAndRemoveFromCache(withCacheable: self) { callbackObject in

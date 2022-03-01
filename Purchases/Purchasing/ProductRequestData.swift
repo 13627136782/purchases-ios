@@ -54,12 +54,12 @@ extension ProductRequestData: Encodable {
     enum CodingKeys: String, CodingKey {
 
         case productIdentifier = "product_id"
-        case paymentMode = "payment_mode"
+        case paymentMode
         case currencyCode = "currency"
         case price
-        case normalDuration = "normal_duration"
-        case introDuration = "intro_duration"
-        case trialDuration = "trial_duration"
+        case normalDuration
+        case introDuration
+        case trialDuration
         case introPrice = "introductory_price"
         case subscriptionGroup = "subscription_group_id"
         case discounts = "offers"
